@@ -1,5 +1,5 @@
 import styles from './Button.module.css';
-export const ButtonTodos = ({ children, ...props }) => {
+export const Button = ({ children, ...props }) => {
 	return children === '.' ? (
 		<button className={styles.arr} {...props}>
 			{children}

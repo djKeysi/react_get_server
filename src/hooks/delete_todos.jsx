@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { getTodos } from './get_todos';
 
 export const deleteTodos = (setTodos) => {
+	const [isDeleting, setisDeleting] = useState(false);
 	const onClickDeleteTodos = (id) => {
+		setisDeleting(true);
 		fetch(`http://localhost:3005/todos/${id}`, {
 			method: 'DELETE',
 		})
@@ -9,8 +12,8 @@ export const deleteTodos = (setTodos) => {
 				setTodos((prevTodos) => prevTodos.filter((todos) => todos.id !== id));
 				getTodos(setTodos);
 			})
-			.catch((err) => console.log(err));
+			.finally(() => setisDeleting(false));
 	};
 
-	return { onClickDeleteTodos };
+	return { onClickDeleteTodos, isDeleting };
 };

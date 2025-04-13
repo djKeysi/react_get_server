@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import styles from './app.module.css';
-import { InputTodos } from './InputTodos/InputTodos';
-import { ButtonTodos } from './ButtonTodos/ButtonTodos';
+import { Input } from './Input/Input';
+import { Button } from './Button/Button';
 import { addTodos } from './hooks/add_todos';
 import { updateTodos } from './hooks/update_todos';
 import { deleteTodos } from './hooks/delete_todos';
 import { getTodos } from './hooks/get_todos';
-import { ExtendedLink } from './hooks/extended_link';
+import { ExtendedLink } from './extended_link';
 import {
 	data,
 	Navigate,
@@ -16,24 +16,26 @@ import {
 	useNavigate,
 	useParams,
 } from 'react-router-dom';
+import { Search, TitleLength } from './utils/utils';
 //npx json-server@0.17.4 --watch src/db.json --port 3005
 export const App = () => {
 	const [todos, setTodos] = useState([]);
 	const [butonBackManePage, setButonBackManePage] = useState(false);
 
 	const [but, setBut] = useState('Сортировка по алфавиту');
+	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		getTodos(setTodos);
+		if (isLoading) {
+			getTodos(setTodos, isLoading);
+		} else {
+			setIsLoading(false);
+		}
 	}, []);
-
-	const titleLength = (title) => {
-		return title.length === 10 ? title : title.slice(0, 10) + '...';
-	};
 
 	const MainPage = () => {
 		const [valueInput, setValueInput] = useState(''); // Добавление задачи
-		const { onClickAddTodos, isCreating } = addTodos(setTodos, valueInput); // Добавление задачи
+		const { onClickAddTodos } = addTodos(setTodos, valueInput); // Добавление задачи
 
 		let [valueInputSearch, setValueInputSearch] = useState(''); // Для поиска
 
@@ -44,18 +46,12 @@ export const App = () => {
 				getTodos(setTodos);
 			}
 		};
-		const search = todos.filter((item) => {
-			return item.title
-				.toLowerCase()
-				.trim()
-				.includes(valueInputSearch.toLowerCase());
-		});
 
 		const onClickSearch = () => {
 			if (valueInputSearch !== '') {
-				if (search.length !== 0) {
+				if (Search(todos, valueInputSearch).length !== 0) {
 					setButonBackManePage(!butonBackManePage);
-					setTodos(search);
+					setTodos(Search(todos, valueInputSearch));
 				}
 			} else {
 				getTodos(setTodos);
@@ -88,53 +84,54 @@ export const App = () => {
 		return (
 			<>
 				<div>
-					<InputTodos
+					<Input
 						placeholder="Введите название задачи..."
 						value={valueInput}
 						onChange={(e) => setValueInput(e.target.value)}
 					/>
 
-					<ButtonTodos disabled={isCreating} onClick={onClickAddTodos}>
-						Добавить задачу
-					</ButtonTodos>
+					<Button onClick={onClickAddTodos}>Добавить задачу</Button>
 				</div>
+
 				<div>
-					<InputTodos
+					<Input
 						//disabled={!checked}
 						placeholder="Введите слово для поиска"
 						value={valueInputSearch}
 						onChange={inputSearchTodos}
 					/>
-					<ButtonTodos onClick={onClickSearch}>Найти</ButtonTodos>
+					<Button onClick={onClickSearch}>Найти</Button>
 				</div>
+
 				<div>
 					{' '}
-					<ButtonTodos onClick={onClickSortTodos}>{but}</ButtonTodos>
+					<Button onClick={onClickSortTodos}>{but}</Button>
 				</div>
-				{search.length === 0 && (
-					<div style={{ color: 'red' }}> Нет такой задачи</div>
+				{Search(todos, valueInputSearch).length === 0 &&
+					valueInputSearch !== '' && (
+						<div style={{ color: 'red' }}> Нет такой задачи</div>
+					)}
+				{!isLoading ? (
+					<div>Загрузка...</div>
+				) : (
+					<div>
+						<ul className={styles.older}>
+							{todos.map(({ id, title }) => (
+								// <li key={id} onClick={() => setValueChecked(id)}>
+								<li key={id}>
+									<ExtendedLink to={`/task/${id}`}>
+										{TitleLength(title)}
+									</ExtendedLink>
+								</li>
+							))}
+						</ul>
+						<Outlet />
+					</div>
 				)}
 
-				{/* {isLoading ? (
-					<div>Идет загрузка...</div>
-				) : ( */}
-				<div>
-					<ul className={styles.older}>
-						{todos.map(({ id, title }) => (
-							// <li key={id} onClick={() => setValueChecked(id)}>
-							<li key={id}>
-								<ExtendedLink to={`/task/${id}`}>
-									{titleLength(title)}
-								</ExtendedLink>
-							</li>
-						))}
-					</ul>
-					<Outlet />
-				</div>
-				{/* )} */}
 				{butonBackManePage && (
 					<div>
-						<ButtonTodos onClick={onClickBackMainPage}>Назад</ButtonTodos>
+						<Button onClick={onClickBackMainPage}>Назад</Button>
 					</div>
 				)}
 			</>
@@ -149,14 +146,14 @@ export const App = () => {
 		const [valueInputUpdate, setValueInputUpdate] = useState('');
 		const navigate = useNavigate();
 
-		const { onClickUpdateTodos } = updateTodos(
+		const { onClickUpdateTodos, isUpdating } = updateTodos(
 			setTodos,
 			checked,
 			valueChecked,
 			valueInputUpdate,
 		);
 
-		const { onClickDeleteTodos } = deleteTodos(setTodos);
+		const { onClickDeleteTodos, isDeleting } = deleteTodos(setTodos);
 
 		const onClickBackListTodos = () => {
 			//console.log('onClickBackListTodos');
@@ -169,30 +166,33 @@ export const App = () => {
 				Контент страницы с задачей
 				<ul className={styles.older}>
 					<div>
-						<InputTodos
+						<Input
 							disabled={!checked}
 							placeholder="На что изменяем?"
 							value={valueInputUpdate}
 							onChange={(e) => setValueInputUpdate(e.target.value)}
 						/>
-						<ButtonTodos onClick={onClickUpdateTodos}>
+						<Button disabled={isUpdating} onClick={onClickUpdateTodos}>
 							Изменить задачу
-						</ButtonTodos>
+						</Button>
 					</div>
 					<li onClick={() => setValueChecked(id)}>
 						{todo.title}
 
-						<InputTodos
+						<Input
 							type="checkbox"
 							onChange={() => setChecked(!checked)}
 							value={checked}
 						/>
-						<ButtonTodos onClick={() => onClickDeleteTodos(id)}>
+						<Button
+							disabled={isDeleting}
+							onClick={() => onClickDeleteTodos(id)}
+						>
 							Удалить задачу
-						</ButtonTodos>
+						</Button>
 					</li>
 				</ul>
-				<ButtonTodos onClick={onClickBackListTodos}>.</ButtonTodos>
+				<Button onClick={onClickBackListTodos}>.</Button>
 			</div>
 		) : (
 			<div>Задача удалена</div>
@@ -213,7 +213,7 @@ export const App = () => {
 			<Routes>
 				<Route path="/" element={<MainPage />} />
 				<Route path="task/:id" element={<Todos />} />
-				<Route path="/404" element={<div>404 (страница не найдена)</div>} />
+				<Route path="/404" element={<div>404 (страница ненайдена)</div>} />
 				<Route path="*" element={<Navigate to="/404" />} />
 			</Routes>
 		</div>

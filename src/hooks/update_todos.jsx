@@ -1,5 +1,10 @@
+import { useState } from 'react';
+
 export const updateTodos = (setTodos, checked, valueChecked, valueInputUpdate) => {
+	const [isUpdating, setisUpdating] = useState(false);
 	const onClickUpdateTodos = () => {
+		setisUpdating(true);
+
 		if (checked) {
 			fetch(`http://localhost:3005/todos/${valueChecked}`, {
 				method: 'PUT',
@@ -14,10 +19,11 @@ export const updateTodos = (setTodos, checked, valueChecked, valueInputUpdate) =
 						),
 					);
 				})
-				.catch((err) => console.log(err));
+				.finally(() => setisUpdating(false));
 		}
 	};
 	return {
 		onClickUpdateTodos,
+		isUpdating,
 	};
 };

@@ -11,7 +11,9 @@ export const addTodos = (setTodos, valueInput) => {
 		})
 			.then((res) => res.json())
 			.then((json) => {
-				setTodos((prevTodos) => [...prevTodos, json]);
+				if (valueInput !== '') {
+					setTodos((prevTodos) => [...prevTodos, json]);
+				}
 			})
 			.finally(() => setIsCreating(false));
 	};
