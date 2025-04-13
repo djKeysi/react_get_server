@@ -1,0 +1,19 @@
+.arr {
+	position: relative;
+	width: 25px;
+	height: 25px;
+	border: 2px solid gray;
+	border-radius: 50%;
+}
+.arr:after {
+	position: absolute;
+	top: 8px;
+	left: 6px;
+	content: 'Назад';
+	display: block;
+	width: 15px;
+	height: 7px;
+	border-left: 3px solid gray;
+	border-bottom: 3px solid gray;
+	transform: rotate(45deg);
+}

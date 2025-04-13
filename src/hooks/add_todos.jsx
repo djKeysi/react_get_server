@@ -1,6 +1,10 @@
+import { useState } from 'react';
+
 export const addTodos = (setTodos, valueInput) => {
+	const [isCreating, setIsCreating] = useState(false);
 	const onClickAddTodos = () => {
-		fetch('http://localhost:3005/todos', {
+		setIsCreating(true);
+		fetch('http://localhost:3005/todos/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json; charset=UTF-8' },
 			body: JSON.stringify({ title: valueInput }),
@@ -9,10 +13,11 @@ export const addTodos = (setTodos, valueInput) => {
 			.then((json) => {
 				setTodos((prevTodos) => [...prevTodos, json]);
 			})
-			.catch((err) => console.log(err));
+			.finally(() => setIsCreating(false));
 	};
 
 	return {
 		onClickAddTodos,
+		isCreating,
 	};
 };
